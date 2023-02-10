@@ -7,17 +7,32 @@
     <title>Document</title>
 </head>
 <body>
-    <h1>Count Page</h1>
-    <h2 id = "count"></h2>
+    <h1>Group Name: {{groupname}}</h1>
+    <textarea id="chat-log" cols="100" rows="20">
+        {% for chat in chats %}
+            {{chat.chat}}
+        {% endfor %}
+    </textarea><br>
+    <input id="chat-message-input" type="text" size="100"><br>
+    <input id="chat-message-submit" type="button" value="Send">
+    {{groupname|json_script:"group-name"}}
     <script>
-        var ws = new WebSocket("ws://127.0.0.1:8000/ws/wsc/")
+        const group_name = JSON.parse(document.getElementById('group-name').textContent)
+        var ws = new WebSocket("ws://127.0.0.1:8000/ws/wsc/"+group_name+"/")
         ws.onopen = function(){
             console.log('WebSocket Connected...')
-            ws.send("Hi, message from client")
+            
         }
         ws.onmessage = function(event){
-            console.log("Message:", event.data)
-            document.getElementById("count").innerText = event.data
+            const data = JSON.parse(event.data)
+            document.getElementById("chat-log").value += data.msg+"\n"
+        }
+        document.getElementById("chat-message-submit").onclick = function(event){
+            const message = document.getElementById("chat-message-input").value
+            ws.send(JSON.stringify({
+                'msg':message
+            }))
+            document.getElementById("chat-message-input").value = ""
         }
     </script>
 </body>
